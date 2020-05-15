@@ -23,5 +23,18 @@ library
     pure-txt
   exposed-modules: 
     Pure.Spinners
+    Pure.Spinners.ChasingDots
+    Pure.Spinners.Circle
+    Pure.Spinners.CubeGrid
+    Pure.Spinners.DoubleBounce
+    Pure.Spinners.FadingCircle
+    Pure.Spinners.FoldingCube
+    Pure.Spinners.Pulse
+    Pure.Spinners.RotatingPlane
+    Pure.Spinners.ThreeBounce
+    Pure.Spinners.WanderingCubes
+    Pure.Spinners.Wave
+  other-modules:
+    Pure.Spinners.Utils
   hs-source-dirs:      src
   default-language:    Haskell2010
