@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.RotatingPlane (RotatingPlane(..),defaultRotatingPlane) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -27,27 +24,34 @@ instance
   where
     theme c = do
         let 
-            w, h, m :: Int
-            w = fromIntegral $ natVal @width Proxy 
-            h = fromIntegral $ natVal @height Proxy 
-            m = fromIntegral $ natVal @margin Proxy 
+            anim = Txt.tail c
+
+            w, h, m :: Txt -> Txt
+            w = fi $ natVal @width Proxy 
+            h = fi $ natVal @height Proxy 
+            m = fi $ natVal @margin Proxy 
 
             b :: String
             b = symbolVal @color Proxy 
 
-        keyframes (Txt.tail c) $ do
-            is (per 0)   .> trans (persp(pxs 120) <<>> rotX(deg 0) <<>> rotY(deg 0))
-            is (per 25)  .> trans (persp(pxs 120) <<>> rotX(neg (deg 180.1)) <<>> rotY(deg 0))
-            is (per 50)  .> trans (persp(pxs 120) <<>> rotX(neg (deg 180)) <<>> rotY(neg (deg 179.9)))
-            is (per 75)  .> trans (persp(pxs 120) <<>> rotX(deg 0) <<>> rotY(neg(deg 179.9)))
-            is (per 100) .> trans (persp(pxs 120) <<>> rotX(deg 0) <<>> rotY(deg 0))
+        atKeyframes anim $ do
+            let trans x y = 
+                    let p = persp(120px)
+                        rx = rotX(x deg)
+                        ry = rotY(y deg)
+                    in transform =: p <<>> rx <<>> ry
+            is (0%)   .> trans 0 0 
+            is (25%)  .> trans (-180.1) 0
+            is (50%)  .> trans (-180) (-179.9)
+            is (75%)  .> trans 0 (-179.9)
+            is (100%) .> trans 0 0
 
         void $ is c .> do
-            width =: pxs w
-            height =: pxs h 
-            backgroundColor =: toTxt b
-            margin =: pxs m <<>> auto
-            anim $ Txt.tail c <> " 4s infinite ease-in-out"
+            width            =: w px
+            height           =: h px
+            background-color =: toTxt b
+            margin           =* [m px,auto]
+            animation        =: anim <<>> 4s <<>> infinite <<>> easeinout
 
 instance 
     ( KnownNat width

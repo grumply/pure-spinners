@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables, AllowAmbiguousTypes #-}
 module Pure.Spinners.Wave (Wave(..),defaultWave) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -37,44 +34,48 @@ instance
   where
     theme c = do
       let
-        n, d, w, h, m :: Int
-        n = fromIntegral $ natVal @count Proxy
-        d = fromIntegral $ natVal @duration Proxy
-        p = fromIntegral $ natVal @delay Proxy
-        w = fromIntegral $ natVal @width Proxy
-        h = fromIntegral $ natVal @height Proxy
-        m = fromIntegral $ natVal @margin Proxy
+        anim = Txt.tail c
 
-        n',d',p' :: Double
-        n' = fromIntegral n
-        d' = fromIntegral d / 1000
-        p' = fromIntegral p / 1000
+        d, p :: Double
+        n = fi $ natVal @count Proxy
+        d = fi $ natVal @duration Proxy
+        p = fi $ natVal @delay Proxy
+
+        w, h, m :: Txt -> Txt
+        w = fi $ natVal @width Proxy
+        h = fi $ natVal @height Proxy
+        m = fi $ natVal @margin Proxy
 
         b :: String
         b = symbolVal @color Proxy
 
-      keyframes (Txt.tail c) $ do
-        is (per 0) . or is (per 40) . or is (per 100) .> trans (scaleY(dec 0.4))
-        is (per 20) .> trans (scaleY one)
+      atKeyframes anim $ do
+        is (0%) . or is (40%) . or is (100%) .> 
+          transform =: scaleY(0.4)
+
+        is (20%) .> 
+          transform =: scaleY(1)
 
       void $ is c $ do
         apply $ do
-          margin =: pxs m <<>> auto
-          height =: pxs h
-          width =: "calc(" <> pxs w <> " * 1.25)"
-          textAlign =: "center"
-          fontSize =: pxs 10
+          margin     =* [m px,auto]
+          height     =: h px
+          width      =: calc(w px * 1.25)
+          text-align =: center
+          font-size  =: 10px
 
         child (tag Div) $ do
           apply $ do
-            backgroundColor =: toTxt b
-            height =: per 100
-            width =: pxs 6
-            display =: inlineBlock
-            anim $ Txt.tail c <<>> ms d <> " infinite ease-in-out"
+            background-color =: toTxt b
+            height           =: (100%)
+            width            =: 6px
+            display          =: inline-block
+            animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout
 
-          for_ [1..n] $ \r -> is (nth r) .>
-            "animation-delay" =: neg (sec (d' + p' / (n' - 1) * (n' - fromIntegral r)))
+          for_ [1..n] $ \r -> 
+            nthChild (rtn r) .>
+              let t = d + p / (n - 1) * (n - r)
+              in animation-delay =: negate t <#> ms 
 
 instance 
   ( KnownNat count
@@ -87,7 +88,7 @@ instance
   ) => Pure (Wave count duration delay width height margin color) 
   where
     view _ = 
-        let c = fromIntegral $ natVal @count Proxy 
+        let c = fi $ natVal @count Proxy 
         in Div <| Themed @(Wave count duration delay width height margin color) |> Prelude.replicate c Div
 
 defaultWave :: View

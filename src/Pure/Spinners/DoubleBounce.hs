@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.DoubleBounce (DoubleBounce(..),defaultDoubleBounce) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -27,38 +24,43 @@ instance
   where
     theme c = do
       let 
-        w, h, m :: Int
-        w = fromIntegral $ natVal @width Proxy 
-        h = fromIntegral $ natVal @height Proxy 
-        m = fromIntegral $ natVal @margin Proxy 
+        anim = Txt.tail c
+
+        w, h, m :: Txt -> Txt
+        w = fi $ natVal @width Proxy 
+        h = fi $ natVal @height Proxy 
+        m = fi $ natVal @margin Proxy 
 
         b :: String
         b = symbolVal (Proxy @color)
 
-      keyframes (Txt.tail c) $ do
-        is (per 0) . or is (per 100) .> trans (scale zero)
-        is (per 50) .> trans (scale one)
+      atKeyframes anim $ do
+        is (0%) . or is (100%) .> 
+          transform =: scale(0)
+
+        is (50%) .> 
+          transform =: scale(1)
 
       void $ is c $ do
         apply $ do
-          width =: pxs w
-          height =: pxs h
-          margin =: pxs m <<>> auto
+          width    =: w px
+          height   =: h px
+          margin   =* [m px,auto]
           position =: relative
 
         child (tag Div) .> do
-          width =: per 100
-          height =: per 100
-          borderRadius =: per 50
-          backgroundColor =: toTxt b
-          opacity =: dec 0.6
-          position =: absolute
-          top =: zero
-          left =: zero
-          anim $ Txt.tail c <> " 2.0s infinite ease-in-out"
+          width            =: (100%)
+          height           =: (100%)
+          border-radius    =: (50%)
+          background-color =: toTxt b
+          opacity          =: 0.6
+          position         =: absolute
+          top              =: 0
+          left             =: 0
+          animation        =: anim <<>> 2 s <<>> infinite <<>> easeinout
 
-        pseudo "last-child" .> do
-          "animation-delay" =: neg (sec 1)
+        is lastChild .> do
+          animation-delay =: (-1) s
 
 instance 
   ( KnownNat width

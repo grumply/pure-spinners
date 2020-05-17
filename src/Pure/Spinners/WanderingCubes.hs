@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.WanderingCubes (WanderingCubes(..),defaultWanderingCubes) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -34,43 +31,53 @@ instance
     where
         theme c = do
             let
-                d, x, w, h, m :: Int
-                d = fromIntegral $ natVal @duration Proxy 
-                x = fromIntegral $ natVal @distance Proxy 
-                w = fromIntegral $ natVal @width Proxy 
-                h = fromIntegral $ natVal @height Proxy 
-                m = fromIntegral $ natVal @margin Proxy 
+                anim = Txt.tail c
+
+                d :: Double
+                d = fi $ natVal @duration Proxy 
+
+                x, w, h, m :: Txt -> Txt
+                x = fi $ natVal @distance Proxy 
+                w = fi $ natVal @width Proxy 
+                h = fi $ natVal @height Proxy 
+                m = fi $ natVal @margin Proxy 
 
                 b :: String
                 b = symbolVal @color Proxy 
 
-            keyframes (Txt.tail c) $ do
-                is (per 0)    .> trans (rotate(deg 0))
-                is (per 25)   .> trans (translateX(pxs x) <<>> rotate(neg (deg 90)) <<>> scale(dec 0.5))
-                is (per 50)   .> trans (translateX(pxs x) <<>> translateY(pxs x) <<>> rotate(neg(deg 179)))
-                is (per 50.1) .> trans (translateX(pxs x) <<>> translateY(pxs x) <<>> rotate(neg(deg 180)))
-                is (per 75)   .> trans (translateX(zero) <<>> translateY(pxs x) <<>> rotate(neg(deg 270)) <<>> scale(dec 0.5))
-                is (per 100)  .> trans (rotate(neg(deg 360)))
+            atKeyframes anim $ do
+                is (0%) .> 
+                    transform =: rot(0 deg)
+                is (25%) .> 
+                    transform =: translateX(x px) <<>> rot((-90)deg) <<>> scale(0.5)
+                is (50%) .> 
+                    transform =: translateX(x px) <<>> translateY(x px) <<>> rot((-179)deg)
+                is (50.1%) .> 
+                    transform =: translateX(x px) <<>> translateY(x px) <<>> rot((-180)deg)
+                is (75%) .> 
+                    transform =: translateX(0px) <<>> translateY(x px) <<>> rot((-270)deg) <<>> scale(0.5)
+                is (100%) .> 
+                    transform =: rot((-360)deg)
 
             void $ is c $ do
                 apply $ do
-                    margin =: pxs m <<>> auto
-                    height =: pxs h
-                    width =: pxs w
+                    margin   =* [m px,auto]
+                    height   =: h px
+                    width    =: w px
                     position =: relative
 
                 child (tag Div) $ do
                     apply $ do
-                        backgroundColor =: toTxt b
-                        width =: pxs 10
-                        height =: pxs 10
-                        position =: absolute
-                        top =: zero
-                        left =: zero
-                        anim $ Txt.tail c <<>> ms d <<>> "ease-in-out" <<>> neg (ms d) <<>> "infinite both"
+                        background-color =: toTxt b
+                        width            =: 10 px
+                        height           =: 10 px
+                        position         =: absolute
+                        top              =: 0
+                        left             =: 0
+                        animation        =: anim <<>> d <#> ms <<>> easeinout <<>> negate d <#> ms <<>> infinite <<>> both
 
-                    is (nth 2) .>
-                        "animation-delay" =: neg (ms (d `div` 2))
+                    nthChild 2 .>
+                        animation-delay =: negate (d / 2) <#> ms
 
 instance 
     ( KnownNat duration

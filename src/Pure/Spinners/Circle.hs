@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.Circle (Circle(..),defaultCircle) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -34,51 +31,59 @@ instance
   where
     theme c = do
       let
-        n, d, w, h, m :: Int
-        n = fromIntegral $ natVal @count Proxy 
-        d = fromIntegral $ natVal @duration Proxy 
-        w = fromIntegral $ natVal @width Proxy 
-        h = fromIntegral $ natVal @height Proxy 
-        m = fromIntegral $ natVal @margin Proxy 
+        anim = Txt.tail c 
+
+        n, d :: Double
+        n = fi $ natVal @count Proxy 
+        d = fi $ natVal @duration Proxy 
+
+        w, h, m :: Txt -> Txt
+        w = fi $ natVal @width Proxy 
+        h = fi $ natVal @height Proxy 
+        m = fi $ natVal @margin Proxy 
 
         b :: String
         b = symbolVal @color Proxy 
 
-        d' :: Double
-        d' = fromIntegral d / 1000
+      atKeyframes anim $ do
+          is (0%) . or is (80%) . or is (100%) .> 
+            transform =: scale(0)
 
-      keyframes (Txt.tail c) $ do
-          is (per 0) . or is (per 80) . or is (per 100) .> trans (scale zero)
-          is (per 40) .> trans (scale one)
+          is (40%) .> 
+            transform =: scale(1)
 
       void $ is c $ do
         apply $ do
-          margin =: pxs m <<>> auto
-          width =: pxs w
-          height =: pxs h
+          margin   =* [m px,auto]
+          width    =: w px
+          height   =: h px
           position =: relative
 
         child (tag Div) $ do
           apply $ do
-            width =: per 100
-            height =: per 100
+            width    =: (100%)
+            height   =: (100%)
             position =: absolute
-            left =: zero
-            top =: zero
+            left     =: 0
+            top      =: 0
 
           is before .> do
-            content =: emptyQuotes
-            display =: block
-            margin =: zero <<>> auto
-            width =: per 15
-            height =: per 15
-            backgroundColor =: toTxt b
-            borderRadius =: per 100
-            anim $ Txt.tail c <<>> ms d <> " infinite ease-in-out both"
+            content          =: emptyQuotes
+            display          =: block
+            margin           =* [0,auto]
+            width            =: (15%)
+            height           =: (15%)
+            background-color =: toTxt b
+            border-radius    =: (100%)
+            animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout <<>> both
 
-          for_ [2..n] $ \i -> is (nth i) $ do
-            apply $ trans $ rotate (deg (360 / fromIntegral n * (fromIntegral i - 1)))
-            is before .> "animation-delay" =: neg (sec (d' + d' / fromIntegral n * (fromIntegral $ n - i)))
+          for_ [2..n] $ \x -> do
+            nthChild (rtn x) .>
+              transform =: rotate(360 / n * (x - 1) <#> deg)
+
+            nthChild (rtn x) . is before .> 
+                let t = d + d / n * (n - x)
+                in animation-delay =: negate t <#> ms
 
 instance
   ( KnownNat count
@@ -90,7 +95,7 @@ instance
   ) => Pure (Circle count duration width height margin color)
   where
     view _ = 
-      let c = fromIntegral $ natVal @count Proxy
+      let c = fi $ natVal @count Proxy
       in Div <| Themed @(Circle count duration width height margin color) |> Prelude.replicate c Div
 
 defaultCircle :: View

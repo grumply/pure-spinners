@@ -1,15 +1,12 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.Pulse (Pulse(..),defaultPulse) where
 
-import Data.Proxy
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
+import Data.Proxy
 import GHC.TypeLits
 import Prelude
 
@@ -32,28 +29,34 @@ instance
   where
     theme c = do
       let
-        d, w, h, m :: Int
-        d = fromIntegral $ natVal @duration Proxy 
-        w = fromIntegral $ natVal @width Proxy 
-        h = fromIntegral $ natVal @height Proxy 
-        m = fromIntegral $ natVal @margin Proxy 
+        anim = Txt.tail c
+
+        d :: Double
+        d = fi $ natVal @duration Proxy 
+
+        w, h, m :: Txt -> Txt
+        w = fi $ natVal @width Proxy 
+        h = fi $ natVal @height Proxy 
+        m = fi $ natVal @margin Proxy 
 
         b :: String
         b = symbolVal @color Proxy 
 
-      keyframes (Txt.tail c) $ do
-        is (per 0) .> trans (scale zero)
-        is (per 100) .> do
-          trans $ scale one
-          opacity =: zero
+      atKeyframes anim $ do
+        is (0%) .> 
+          transform =: scale(0)
+
+        is (100%) .> do
+          transform =: scale(1)
+          opacity   =: 0
 
       void $ is c .> do
-        width =: pxs w
-        height =: pxs h
-        margin =: pxs m <<>> auto
-        backgroundColor =: toTxt b
-        borderRadius =: per 100
-        anim $ Txt.tail c <<>> ms d <> " infinite ease-in-out"
+        width            =: w px
+        height           =: h px
+        margin           =* [m px,auto]
+        background-color =: toTxt b
+        border-radius    =: (100%)
+        animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout
 
 instance
   ( KnownNat duration

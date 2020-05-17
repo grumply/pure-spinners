@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.CubeGrid (CubeGrid(..),defaultCubeGrid) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -34,40 +31,44 @@ instance
   where
     theme c = do
       let
-        d, p, w, h, m :: Int
-        d = fromIntegral $ natVal @duration Proxy 
-        p = fromIntegral $ natVal @delay Proxy 
-        w = fromIntegral $ natVal @width Proxy 
-        h = fromIntegral $ natVal @height Proxy 
-        m = fromIntegral $ natVal @margin Proxy 
+        anim = Txt.tail c 
+
+        d, p :: Double
+        d = fi $ natVal @duration Proxy 
+        p = fi $ natVal @delay Proxy 
+
+        w, h, m :: Txt -> Txt
+        w = fi $ natVal @width Proxy 
+        h = fi $ natVal @height Proxy 
+        m = fi $ natVal @margin Proxy 
 
         b :: String
         b = symbolVal @color Proxy 
 
-        d', p' :: Double
-        d' = fromIntegral d / 1000
-        p' = fromIntegral p / 1000
+      atKeyframes anim $ do
+        is (0%) . or is (70%) . or is (100%) .> 
+          transform =: scale3d(1,1,1)
 
-      keyframes (Txt.tail c) $ do
-        is (per 0) . or is (per 70) . or is (per 100) .> trans "scale3d(1,1,1)"
-        is (per 35) .> trans "scale3d(0,0,1)"
+        is (35%) .> 
+          transform =: scale3d(0,0,1)
 
       void $ is c $ do
         apply $ do
-          width =: pxs w
-          height =: pxs h
-          margin =: pxs m <<>> auto
+          width  =: w px
+          height =: h px
+          margin =* [m px,auto]
 
         child (tag Div) $ do
           apply $ do
-            width =: per 33.33
-            height =: per 33.33
-            backgroundColor =: toTxt b
-            float =: left
-            anim $ Txt.tail c <<>> sec d' <> " infinite ease-in-out"
+            width            =: (33.33%)
+            height           =: (33.33%)
+            background-color =: toTxt b
+            float            =: left
+            animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout
 
           for_ (Prelude.zip [1..9] [0.5,0.75,1,0.25,0.5,0.75,0,0.25,0.50]) $ \(n,d) -> 
-            is (nth n) .> "animation-delay" =: sec (p' * d)
+            nthChild n .> 
+              animation-delay =: " " <<>> p * d <#> ms
 
 instance 
   ( KnownNat duration

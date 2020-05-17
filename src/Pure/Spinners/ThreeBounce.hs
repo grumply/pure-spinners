@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.ThreeBounce (ThreeBounce(..),defaultThreeBounce) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -34,39 +31,47 @@ instance
   where
     theme c = do
       let
-        d, p, w, h, m :: Int
-        d = fromIntegral $ natVal @duration Proxy 
-        p = fromIntegral $ natVal @delay Proxy 
-        w = fromIntegral $ natVal @width Proxy 
-        h = fromIntegral $ natVal @height Proxy 
-        m = fromIntegral $ natVal @margin Proxy 
+        anim = Txt.tail c
+
+        d, p :: Double
+        d = fi $ natVal @duration Proxy 
+        p = fi $ natVal @delay Proxy 
+
+        w, h, m :: Txt -> Txt
+        w = fi $ natVal @width Proxy 
+        h = fi $ natVal @height Proxy 
+        m = fi $ natVal @margin Proxy 
 
         b :: String
         b = symbolVal @color Proxy
 
-      keyframes (Txt.tail c) $ do
-          is (per 0) . or is (per 80) . or is (per 100) .> do
-              trans $ scale zero
-          is (per 40) .> do
-              trans $ scale one
+      atKeyframes anim $ do
+          is (0%) . or is (80%) . or is (100%) .>
+              transform =: scale(0)
+
+          is (40%) .>
+              transform =: scale(1)
       
       void $ is c $ do
           apply $ do
-              margin =: pxs m <<>> auto
-              width =: "calc(" <> pxs w <> " * 2)"
-              textAlign =: "center"
+              margin     =* [m px,auto]
+              width      =: calc(w px * 2)
+              text-align =: center
 
           child (tag Div) $ do
               apply $ do
-                  width =: "calc(" <> pxs w <> " / 2)" 
-                  height =: "calc(" <> pxs h <> " / 2)"
-                  backgroundColor =: toTxt b
-                  borderRadius =: per 100
-                  display =: inlineBlock
-                  anim $ Txt.tail c <<>> ms d <> " ease-in-out 0s infinite both"
+                  width            =: calc(w px / 2)
+                  height           =: calc(h px / 2)
+                  background-color =: toTxt b
+                  border-radius    =: (100%)
+                  display          =: inline-block
+                  animation        =: anim <<>> d <#> ms <<>> easeinout <<>> 0 s <<>> infinite <<>> both
 
-              is (nth 1) .> "animation-delay" =: neg (ms p)
-              is (nth 2) .> "animation-delay" =: neg (ms (p `div` 2))
+              nthChild 1 .> 
+                animation-delay =: negate p <#> ms
+
+              nthChild 2 .> 
+                animation-delay =: negate (p / 2) <#> ms
 
 instance
   ( KnownNat duration

@@ -1,13 +1,10 @@
-{-# LANGUAGE OverloadedStrings, GADTs, DataKinds, KindSignatures, TypeApplications, ScopedTypeVariables #-}
 module Pure.Spinners.ChasingDots (ChasingDots(..),defaultChasingDots) where
 
-import Pure.Spinners.Utils
-
-import Pure
+import Pure hiding (delay)
 
 import Pure.Theme
 import Pure.Data.Styles
-import Pure.Data.Txt as Txt
+import Pure.Data.Txt as Txt hiding (center)
 
 import Data.Proxy
 import GHC.TypeLits
@@ -32,45 +29,55 @@ instance
   where
     theme c = do
       let 
-        d, w, h, m :: Int
-        d = fromIntegral $ natVal @duration Proxy
-        w = fromIntegral $ natVal @width Proxy 
-        h = fromIntegral $ natVal @height Proxy 
-        m = fromIntegral $ natVal @margin Proxy 
+        rota   = Txt.tail c <> "_rotate"
+        bounce = Txt.tail c <> "_bounce"
+
+        d :: Double
+        d = fi $ natVal @duration Proxy
+
+        w, h, m :: Txt -> Txt
+        w = fi $ natVal @width Proxy 
+        h = fi $ natVal @height Proxy 
+        m = fi $ natVal @margin Proxy 
 
         b :: String
         b = symbolVal @color Proxy 
 
-      keyframes (Txt.tail c <> "_rotate") $
-        is (per 100) .> trans (rotate(deg 360))
+      atKeyframes rota $
+        is (100%) .> 
+          transform =: rotate(360 deg)
 
-      keyframes (Txt.tail c <> "_bounce") $ do
-        is (per 0) . or is (per 100) .> trans (scale zero)
-        is (per 50) .> trans (scale one)
+      atKeyframes bounce $ do
+        is (0%) . or is (100%) .> 
+          transform =: scale(0)
+
+        is (50%) .> 
+          transform =: scale(1)
 
       void $ is c $ do
         apply $ do
-          margin =: pxs m <<>> auto
-          height =: pxs h
-          width =: pxs w
-          position =: relative
-          textAlign =: "center"
-          anim $ Txt.tail c <> "_rotate" <<>> ms d <> " infinite linear"
+          margin     =* [m px,auto]
+          height     =: h px
+          width      =: w px
+          position   =: relative
+          text-align =: center
+          animation  =: rota <<>> d <#> ms <<>> infinite <<>> linear
 
         child (tag Div) .> do
-          width =: per 60
-          height =: per 60
-          display =: inlineBlock
-          position =: absolute
-          top =: zero
-          backgroundColor =: toTxt b
-          borderRadius =: per 100
-          anim $ Txt.tail c <> "_bounce" <<>> ms d <> " infinite ease-in-out"
+          width            =: (60%)
+          height           =: (60%)
+          display          =: inline-block
+          position         =: absolute
+          top              =: 0
+          background-color =: toTxt b
+          border-radius    =: (100%)
+          animation        =: bounce <<>> d <#> ms <<>> infinite <<>> easeinout
 
         child (tag Div) . pseudo "last-child" .> do
-          top =: auto
-          bottom =: zero
-          "animation-delay" =: neg (ms (d `div` 2))
+          top             =: auto
+          bottom          =: 0
+          animation-delay =: negate (d / 2) <#> ms
+
 
 instance
   ( KnownNat duration
