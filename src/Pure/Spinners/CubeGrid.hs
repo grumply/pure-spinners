@@ -45,29 +45,27 @@ instance
         b :: String
         b = symbolVal @color Proxy 
 
-      atKeyframes anim $ do
-        is (0%) . or is (70%) . or is (100%) .> 
+      atKeyframes anim do
+        is (0%) . or is (70%) . or is (100%) $ do
           transform =: scale3d(1,1,1)
 
-        is (35%) .> 
+        is (35%) do 
           transform =: scale3d(0,0,1)
 
-      void $ is c $ do
-        apply $ do
-          width  =: w px
-          height =: h px
-          margin =* [m px,auto]
+      is c do
+        width  =: w px
+        height =: h px
+        margin =* [m px,auto]
 
-        child (tag Div) $ do
-          apply $ do
-            width            =: (33.33%)
-            height           =: (33.33%)
-            background-color =: toTxt b
-            float            =: left
-            animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout
+        child (tag Div) do
+          width            =: (33.33%)
+          height           =: (33.33%)
+          background-color =: toTxt b
+          float            =: left
+          animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout
 
           for_ (Prelude.zip [1..9] [0.5,0.75,1,0.25,0.5,0.75,0,0.25,0.50]) $ \(n,d) -> 
-            nthChild n .> 
+            nthChild (rtn n) do 
               animation-delay =: " " <<>> p * d <#> ms
 
 instance 

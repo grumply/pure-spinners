@@ -45,36 +45,34 @@ instance
         b :: String
         b = symbolVal @color Proxy 
 
-      atKeyframes anim $ do
-        is (0%) . or is (10%) .> do
+      atKeyframes anim do
+        is (0%) . or is (10%) $ do
           transform =: persp(140px) <<>> rotX((-180)deg)
           opacity   =: 0
 
-        is (25%) . or is (75%) .> do
+        is (25%) . or is (75%) $ do
           transform =: persp(140px) <<>> rotX(0 deg)
           opacity   =: 1
 
-        is (90%) . or is (100%) .> do
+        is (90%) . or is (100%) $ do
           transform =: persp(140px) <<>> rotY(180 deg)
           opacity   =: 0
         
-      void $ is c $ do
-        apply $ do
-          margin    =* [m px,auto]
-          width     =: w px
-          height    =: h px
-          position  =: relative
-          transform =: rotateZ(45 deg)
+      is c do
+        margin    =* [m px,auto]
+        width     =: w px
+        height    =: h px
+        position  =: relative
+        transform =: rotateZ(45 deg)
 
-        child (tag Div) $ do
-          apply $ do
-            float     =: left
-            width     =: (50%)
-            height    =: (50%)
-            position  =: relative
-            transform =: scale(1.1)
+        child (tag Div) do
+          float     =: left
+          width     =: (50%)
+          height    =: (50%)
+          position  =: relative
+          transform =: scale(1.1)
             
-          is before .> do
+          before do
             content          =: emptyQuotes
             position         =: absolute
             top              =: 0
@@ -86,11 +84,11 @@ instance
             transform-origin =* [(100%),(100%)]
 
           for_ [(2,1),(3,3),(4,2)] $ \(n,i) -> do
-            nthChild n .> 
+            nthChild (rtn n) do
               transform =: scale(1.1) <<>> rotateZ(90 * i <#> deg)
 
-            nthChild n . is before .>
-              animation-delay =: p / 4 * i <#> ms
+              before do
+                animation-delay =: p / 4 * i <#> ms
 
 instance 
   ( KnownNat duration

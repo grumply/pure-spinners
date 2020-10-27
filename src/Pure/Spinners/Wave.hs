@@ -49,33 +49,31 @@ instance
         b :: String
         b = symbolVal @color Proxy
 
-      atKeyframes anim $ do
-        is (0%) . or is (40%) . or is (100%) .> 
+      atKeyframes anim do
+        is (0%) . or is (40%) . or is (100%) $ do
           transform =: scaleY(0.4)
 
-        is (20%) .> 
+        is (20%) do
           transform =: scaleY(1)
 
-      void $ is c $ do
-        apply $ do
-          margin     =* [m px,auto]
-          height     =: h px
-          width      =: calc(w px * 1.25)
-          text-align =: center
-          font-size  =: 10px
+      is c do
+        margin     =* [m px,auto]
+        height     =: h px
+        width      =: calc(w px * 1.25)
+        text-align =: center
+        font-size  =: 10px
 
-        child (tag Div) $ do
-          apply $ do
-            background-color =: toTxt b
-            height           =: (100%)
-            width            =: 6px
-            display          =: inline-block
-            animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout
+        child (tag Div) do
+          background-color =: toTxt b
+          height           =: (100%)
+          width            =: 6px
+          display          =: inline-block
+          animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout
 
           for_ [1..n] $ \r -> 
-            nthChild (rtn r) .>
+            nthChild (rtn r) do
               let t = d + p / (n - 1) * (n - r)
-              in animation-delay =: negate t <#> ms 
+              animation-delay =: negate t <#> ms 
 
 instance 
   ( KnownNat count

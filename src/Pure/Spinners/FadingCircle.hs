@@ -46,29 +46,27 @@ instance
         b :: String
         b = symbolVal @color Proxy 
 
-      atKeyframes anim $ do
-        is (0%) . or is (39%) . or is (100%) .> 
+      atKeyframes anim do
+        is (0%) . or is (39%) . or is (100%) $ do 
           opacity =: 0
 
-        is (40%) .> 
+        is (40%) do 
           opacity =: 1
 
-      void $ is c $ do
-        apply $ do
-          width    =: w px
-          height   =: h px
-          margin   =* [m px,auto]
-          position =: relative
+      is c do
+        width    =: w px
+        height   =: h px
+        margin   =* [m px,auto]
+        position =: relative
 
-        child (tag Div) $ do
-          apply $ do
-            width    =: (100%)
-            height   =: (100%)
-            position =: absolute
-            left     =: 0
-            top      =: 0
+        child (tag Div) do
+          width    =: (100%)
+          height   =: (100%)
+          position =: absolute
+          left     =: 0
+          top      =: 0
 
-          is before .> do
+          before do
             content          =: emptyQuotes
             display          =: block
             margin           =* [zero,auto]
@@ -79,13 +77,13 @@ instance
             animation        =: anim <<>> d <#> ms <<>> infinite <<>> easeinout <<>> both
 
           for_ [2..n] $ \i -> do
-            nthChild (rtn i) .>
-              let d = 360 / n * (i - 1) 
-              in transform =: rotate(d <#> deg)
+            nthChild (rtn i) do
+              let d' = 360 / n * (i - 1) 
+              transform =: rotate(d' <#> deg)
 
-            nthChild (rtn i) . is before .> 
-              let t = d + d / n * (n - i)
-              in animation-delay =: negate t <#> s
+              before do
+                let t = d + d / n * (n - i)
+                animation-delay =: negate t <#> s
 
 instance
   ( KnownNat count

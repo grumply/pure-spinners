@@ -45,33 +45,31 @@ instance
         b :: String
         b = symbolVal @color Proxy
 
-      atKeyframes anim $ do
-          is (0%) . or is (80%) . or is (100%) .>
-              transform =: scale(0)
+      atKeyframes anim do
+        is (0%) . or is (80%) . or is (100%) $ do
+          transform =: scale(0)
 
-          is (40%) .>
-              transform =: scale(1)
-      
-      void $ is c $ do
-          apply $ do
-              margin     =* [m px,auto]
-              width      =: calc(w px * 2)
-              text-align =: center
+        is (40%) do
+          transform =: scale(1)
+    
+      is c do
+        margin     =* [m px,auto]
+        width      =: calc(w px * 2)
+        text-align =: center
 
-          child (tag Div) $ do
-              apply $ do
-                  width            =: calc(w px / 2)
-                  height           =: calc(h px / 2)
-                  background-color =: toTxt b
-                  border-radius    =: (100%)
-                  display          =: inline-block
-                  animation        =: anim <<>> d <#> ms <<>> easeinout <<>> 0 s <<>> infinite <<>> both
+        child (tag Div) do
+          width            =: calc(w px / 2)
+          height           =: calc(h px / 2)
+          background-color =: toTxt b
+          border-radius    =: (100%)
+          display          =: inline-block
+          animation        =: anim <<>> d <#> ms <<>> easeinout <<>> 0 s <<>> infinite <<>> both
 
-              nthChild 1 .> 
-                animation-delay =: negate p <#> ms
+          nthChild 1 do 
+            animation-delay =: negate p <#> ms
 
-              nthChild 2 .> 
-                animation-delay =: negate (p / 2) <#> ms
+          nthChild 2 do 
+            animation-delay =: negate (p / 2) <#> ms
 
 instance
   ( KnownNat duration

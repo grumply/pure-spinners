@@ -34,21 +34,20 @@ instance
         b :: String
         b = symbolVal (Proxy @color)
 
-      atKeyframes anim $ do
-        is (0%) . or is (100%) .> 
+      atKeyframes anim do
+        is (0%) . or is (100%) $ do
           transform =: scale(0)
 
-        is (50%) .> 
+        is (50%) do 
           transform =: scale(1)
 
-      void $ is c $ do
-        apply $ do
-          width    =: w px
-          height   =: h px
-          margin   =* [m px,auto]
-          position =: relative
+      is c do
+        width    =: w px
+        height   =: h px
+        margin   =* [m px,auto]
+        position =: relative
 
-        child (tag Div) .> do
+        child (tag Div) do
           width            =: (100%)
           height           =: (100%)
           border-radius    =: (50%)
@@ -59,7 +58,7 @@ instance
           left             =: 0
           animation        =: anim <<>> 2 s <<>> infinite <<>> easeinout
 
-        is lastChild .> do
+        lastChild do
           animation-delay =: (-1) s
 
 instance 

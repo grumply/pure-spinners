@@ -42,15 +42,15 @@ instance
         b :: String
         b = symbolVal @color Proxy 
 
-      atKeyframes anim $ do
-        is (0%) .> 
+      atKeyframes anim do
+        is (0%) do
           transform =: scale(0)
 
-        is (100%) .> do
+        is (100%) do
           transform =: scale(1)
           opacity   =: 0
 
-      void $ is c .> do
+      is c do
         width            =: w px
         height           =: h px
         margin           =* [m px,auto]

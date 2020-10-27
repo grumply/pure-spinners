@@ -34,24 +34,32 @@ instance
             b :: String
             b = symbolVal @color Proxy 
 
-        atKeyframes anim $ do
-            let trans x y = 
-                    let p = persp(120px)
-                        rx = rotX(x deg)
-                        ry = rotY(y deg)
-                    in transform =: p <<>> rx <<>> ry
-            is (0%)   .> trans 0 0 
-            is (25%)  .> trans (-180.1) 0
-            is (50%)  .> trans (-180) (-179.9)
-            is (75%)  .> trans 0 (-179.9)
-            is (100%) .> trans 0 0
+        atKeyframes anim do
+            let 
+              trans x y = 
+                persp(120px) <<>> rotX(x deg) <<>> rotY(y deg)
 
-        void $ is c .> do
-            width            =: w px
-            height           =: h px
-            background-color =: toTxt b
-            margin           =* [m px,auto]
-            animation        =: anim <<>> 4s <<>> infinite <<>> easeinout
+            is (0%) do
+              transform =: trans 0 0 
+
+            is (25%) do
+              transform =: trans (-180.1) 0
+
+            is (50%) do
+              transform =: trans (-180) (-179.9)
+
+            is (75%) do
+              transform =: trans 0 (-179.9)
+
+            is (100%) do
+              transform =: trans 0 0
+
+        is c do
+          width            =: w px
+          height           =: h px
+          background-color =: toTxt b
+          margin           =* [m px,auto]
+          animation        =: anim <<>> 4s <<>> infinite <<>> easeinout
 
 instance 
     ( KnownNat width

@@ -43,27 +43,26 @@ instance
         b :: String
         b = symbolVal @color Proxy 
 
-      atKeyframes rota $
-        is (100%) .> 
+      atKeyframes rota do
+        is (100%) do 
           transform =: rotate(360 deg)
 
-      atKeyframes bounce $ do
-        is (0%) . or is (100%) .> 
-          transform =: scale(0)
+      atKeyframes bounce do
+        is (0%) . or is (100%) $ do
+            transform =: scale(0)
 
-        is (50%) .> 
+        is (50%) do 
           transform =: scale(1)
 
-      void $ is c $ do
-        apply $ do
-          margin     =* [m px,auto]
-          height     =: h px
-          width      =: w px
-          position   =: relative
-          text-align =: center
-          animation  =: rota <<>> d <#> ms <<>> infinite <<>> linear
+      is c do
+        margin     =* [m px,auto]
+        height     =: h px
+        width      =: w px
+        position   =: relative
+        text-align =: center
+        animation  =: rota <<>> d <#> ms <<>> infinite <<>> linear
 
-        child (tag Div) .> do
+        child (tag Div) do
           width            =: (60%)
           height           =: (60%)
           display          =: inline-block
@@ -73,10 +72,11 @@ instance
           border-radius    =: (100%)
           animation        =: bounce <<>> d <#> ms <<>> infinite <<>> easeinout
 
-        child (tag Div) . pseudo "last-child" .> do
-          top             =: auto
-          bottom          =: 0
-          animation-delay =: negate (d / 2) <#> ms
+        child (tag Div) do 
+          pseudo "last-child" do
+            top             =: auto
+            bottom          =: 0
+            animation-delay =: negate (d / 2) <#> ms
 
 
 instance
